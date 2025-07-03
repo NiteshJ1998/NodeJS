@@ -11,6 +11,6 @@ app.get("/about", (req, res) => {
   return res.send("Hello From About Page");
 });
 
-const myServer = http.createServer(http);
+const myServer = http.createServer(app);
 
 myServer.listen(9000, () => console.log("Server Started.."));
