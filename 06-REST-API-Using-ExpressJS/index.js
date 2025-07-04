@@ -1,8 +1,12 @@
 const express = require("express");
 const users = require("./MOCK_DATA.json");
+const fs = require("fs");
 
 const app = express();
 const PORT = 2000;
+
+// Middleware -Plugin
+app.use(express.urlencoded({ extended: false }));
 
 // Mobile Friendly response
 app.get("/users", (req, res) => {
@@ -32,12 +36,21 @@ app
     //Edit User with id
     res.json({ status: "Pending" });
   })
-  .post((req, res) => {
-    res.json({ status: "Pending" });
-  })
+
   .delete((req, res) => {
     res.json({ status: "Pending" });
   });
+
+app.post("/api/users", (req, res) => {
+  // const body = req.body;
+  // console.log("Body", body);
+
+  const body = req.body;
+  users.push({ ...body, id: users.length + 1 });
+  fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err, data) => {
+    return res.json({ status: "Success", id: users.length });
+  });
+});
 
 // Patch means we have to edit some user
 
