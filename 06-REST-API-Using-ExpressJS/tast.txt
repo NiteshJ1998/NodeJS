@@ -1,8 +1,8 @@
 REST API - JSON
 
-GET/users - List all users
-GET /users/1 - Get the user with id 1
-GET /users/2 - Get the user with id 2
+GET/users - List all users -- Done
+GET /users/1 - Get the user with id 1 -- Done
+GET /users/2 - Get the user with id 2 -- Done
 
 POST /users - Create new user
 
