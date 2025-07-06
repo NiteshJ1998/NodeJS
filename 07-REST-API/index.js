@@ -1,9 +1,42 @@
 const express = require("express");
-const users = require("./MOCK_DATA.json");
 const fs = require("fs");
+const mongoose = require("mongoose");
 
 const app = express();
 const PORT = 2000;
+
+app.use(express.json());
+//Connection
+mongoose
+  .connect("mongodb://127.0.0.1:27017/REST-API") // this return promise
+  .then(() => console.log("MongoDB connected "))
+  .catch((err) => console.log("MongoDB not connected", err));
+
+//Schema
+const userSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: true,
+    },
+    lastName: {
+      type: String,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    jobTitle: {
+      type: String,
+    },
+  },
+  { timestamps: true }
+);
+
+//Model
+
+const User = mongoose.model("user", userSchema);
 
 // Middleware -Plugin
 app.use(express.urlencoded({ extended: false }));
@@ -19,15 +52,18 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  console.log("this is middleware 2 ", req.username);
+  // console.log("this is middleware 2 ", req.username);
   next();
 });
 
 // Mobile Friendly response
-app.get("/users", (req, res) => {
+app.get("/users", async (req, res) => {
+  const allDbUsers = await User.find({}); //it means it show all the dbs which we have created
   const html = `
     <ul>
-      ${users.map((user) => `<li>${user.first_name}</li>`).join("")}
+      ${allDbUsers
+        .map((user) => `<li>${user.firstName} - ${user.email}</li>`)
+        .join("")}
     </ul>
   `;
   res.send(html);
@@ -35,66 +71,49 @@ app.get("/users", (req, res) => {
 
 //REST API
 
-app.get("/api/users", (req, res) => {
-  return res.json(users);
+app.get("/api/users", async (req, res) => {
+  const allDbUsers = await User.find({});
+  return res.json(allDbUsers);
 });
 
 app
   .route("/api/users/:id")
-  .get((req, res) => {
-    // To get the id
-    const id = Number(req.params.id);
-    const user = users.find((user) => user.id === id); // find the id on mock data
+  .get(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: "No such user found " });
     return res.json(user);
   })
-  .patch((req, res) => {
+  .patch(async (req, res) => {
+    await User.findByIdAndUpdate(req.params.id, { firstName: "Changed" });
+    return res.json({ status: "Success" });
     //Edit User with id
-    const id = Number(req.params.id);
-    const index = users.findIndex((user) => user.id === id);
-
-    if (index === -1) {
-      return res.status(404).json({ status: "User not found" });
-    }
-
-    //UpdatedUser only the provided fields
-    const UpdatedUser = { ...users[index], ...req.body };
-    users[index] = UpdatedUser;
-
-    fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
-      if (err) {
-        return res.status(500).json({ status: "Error writing file " });
-      }
-      res.json({ status: "user updated", user: UpdatedUser });
-    });
   })
 
-  .delete((req, res) => {
-    const id = Number(req.params.id);
-    const index = users.findIndex((user) => user.id === id);
-
-    if (index === -1) {
-      return res.status(404).json({ status: "Item not found" });
-    }
-
-    const deletedUser = users.splice(index, 1)[0];
-
-    fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
-      if (err) {
-        return res.status(500).json({ status: "Error writing file" });
-      }
-      res.json({ status: "User Deleted", user: deletedUser });
-    });
+  .delete(async (req, res) => {
+    await User.findByIdAndDelete(req.params.id);
+    return res.json({ status: "Success" });
   });
 
-app.post("/api/users", (req, res) => {
-  // const body = req.body;
-  // console.log("Body", body);
-
+app.post("/api/users", async (req, res) => {
   const body = req.body;
-  users.push({ ...body, id: users.length + 1 });
-  fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err, data) => {
-    return res.json({ status: "Success", id: users.length });
+  if (
+    !body ||
+    !body.first_name ||
+    !body.last_name ||
+    !body.email ||
+    !body.job_title
+  ) {
+    return res.status(400).json({ msg: "All fields are required to fill" });
+  }
+
+  const result = await User.create({
+    firstName: body.first_name,
+    lastName: body.last_name,
+    email: body.email,
+    jobTitle: body.job_title,
   });
+
+  return res.status(201).json({ msg: "Success" });
 });
 
 // Patch means we have to edit some user
