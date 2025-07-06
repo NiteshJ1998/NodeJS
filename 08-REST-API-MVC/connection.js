@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
 
+//Connection
 async function connectMongoDB(url) {
-  //Connection
-
   return mongoose.connect(url); // this return promise
 }
 
