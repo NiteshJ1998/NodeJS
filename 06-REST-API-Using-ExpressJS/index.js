@@ -34,11 +34,41 @@ app
   })
   .patch((req, res) => {
     //Edit User with id
-    res.json({ status: "Pending" });
+    const id = Number(req.params.id);
+    const index = users.findIndex((user) => user.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ status: "User not found" });
+    }
+
+    //UpdatedUser only the provided fields
+    const UpdatedUser = { ...users[index], ...req.body };
+    users[index] = UpdatedUser;
+
+    fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
+      if (err) {
+        return res.status(500).json({ status: "Error writing file " });
+      }
+      res.json({ status: "user updated", user: UpdatedUser });
+    });
   })
 
   .delete((req, res) => {
-    res.json({ status: "Pending" });
+    const id = Number(req.params.id);
+    const index = users.findIndex((user) => user.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ status: "Item not found" });
+    }
+
+    const deletedUser = users.splice(index, 1)[0];
+
+    fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
+      if (err) {
+        return res.status(500).json({ status: "Error writing file" });
+      }
+      res.json({ status: "User Deleted", user: deletedUser });
+    });
   });
 
 app.post("/api/users", (req, res) => {
