@@ -6,6 +6,11 @@ const bodyParser = require("body-parser");
 const userRoute = require("./routes/user");
 
 const app = express();
+
+app.use(bodyParser.json());
+
+app.use(bodyParser.urlencoded({ extended: true }));
+
 const PORT = 8000;
 
 app.use(bodyParser.json());
