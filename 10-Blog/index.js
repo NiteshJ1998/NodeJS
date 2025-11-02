@@ -1,10 +1,16 @@
 const path = require("path");
 const express = require("express");
 const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
 
 const userRoute = require("./routes/user");
 
 const app = express();
+
+app.use(bodyParser.json());
+
+app.use(bodyParser.urlencoded({ extended: true }));
+
 const PORT = 8000;
 
 mongoose
